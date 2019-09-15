@@ -1,5 +1,6 @@
 package com.henry.springvalid.dto
 
+import com.henry.springvalid.custom.Phone
 import org.hibernate.validator.constraints.Range
 import javax.validation.Valid
 import javax.validation.constraints.AssertTrue
@@ -27,8 +28,22 @@ data class SignUpStep1(
     val route: List<String>?,
 
     @field:AssertTrue
-    val agreed: Boolean?
-) : SignupApiValidator
+    val agreed: Boolean?,
+
+    @field:Phone(groups = [Adult::class])
+    @field:NotBlank(groups = [Adult::class])
+    val phoneNumber: String?
+) : SignupApiValidator {
+    interface Adult : Default
+
+    override fun validationGroups(): Array<Class<*>?> {
+        return if (age!! > 19) {
+            listOf<Class<*>?>(Adult::class.java).toTypedArray()
+        } else {
+            emptyArray()
+        }
+    }
+}
 
 data class SignUpStep2(
 
@@ -63,4 +78,9 @@ data class SignUpRequest(
 
     @field:NotNull
     val agreed: Boolean?
-) : SignupApiValidator
+) : SignupApiValidator {
+
+    override fun validationGroups(): Array<Class<*>?> {
+        return step1.validationGroups() + step2.validationGroups()
+    }
+}
